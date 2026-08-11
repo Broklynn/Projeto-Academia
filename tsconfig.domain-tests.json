@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "declarationMap": false,
+    "incremental": false,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": false,
+    "outDir": ".expo/domain-tests",
+    "rootDir": "src/domain",
+    "sourceMap": false,
+    "target": "ES2022",
+    "verbatimModuleSyntax": false
+  },
+  "include": [
+    "src/domain/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

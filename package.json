@@ -29,6 +29,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
+    "test": "npm run test:domain",
+    "test:domain": "tsc --project tsconfig.domain-tests.json && node --test tests/domain/athlete.validation.test.mjs tests/domain/training.validation.test.mjs",
     "typecheck": "tsc --noEmit"
   },
   "private": true
