@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "duofit",
+    "name": "DuoFit",
     "slug": "duofit",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -16,8 +16,7 @@
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
-      },
-      "predictiveBackGestureEnabled": false
+      }
     },
     "web": {
       "output": "static",
@@ -33,10 +32,6 @@
           "imageWidth": 76
         }
       ]
-    ],
-    "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
-    }
+    ]
   }
 }
