@@ -1,5 +1,9 @@
 import type { Equipment, Exercise, MovementPattern } from '../../domain/exercise';
-import type { SplitFocus, TrainingSplitDay } from '../../domain/training';
+import type {
+  SplitFocus,
+  SplitVariant,
+  TrainingSplitDay,
+} from '../../domain/training';
 
 import { getExerciseCandidatesForSplitDay } from './candidates';
 
@@ -43,6 +47,12 @@ const REQUIRED_PATTERNS_BY_FOCUS = {
   legs: LOWER_BODY_PATTERNS,
 } as const satisfies Readonly<Record<SplitFocus, readonly MovementPattern[]>>;
 
+const CANDIDATE_INDEX_BY_VARIANT = {
+  A: 0,
+  B: 1,
+  C: 2,
+} as const satisfies Readonly<Record<SplitVariant, number>>;
+
 export interface ExerciseSelectionResult {
   readonly exercises: readonly Readonly<Exercise>[];
   readonly missingPatterns: readonly MovementPattern[];
@@ -59,16 +69,20 @@ export function selectExercisesForSplitDay(
   availableEquipment: readonly Equipment[],
 ): ExerciseSelectionResult {
   const candidates = getExerciseCandidatesForSplitDay(day, availableEquipment);
+  const candidateIndex = day.variant
+    ? CANDIDATE_INDEX_BY_VARIANT[day.variant]
+    : 0;
   const selectedExerciseIds = new Set<string>();
   const exercises: Readonly<Exercise>[] = [];
   const missingPatterns: MovementPattern[] = [];
 
   for (const movementPattern of REQUIRED_PATTERNS_BY_FOCUS[day.focus]) {
-    const exercise = candidates.find(
+    const patternCandidates = candidates.filter(
       (candidate) =>
         candidate.movementPattern === movementPattern &&
         !selectedExerciseIds.has(candidate.id),
     );
+    const exercise = patternCandidates[candidateIndex] ?? patternCandidates[0];
 
     if (exercise) {
       exercises.push(exercise);

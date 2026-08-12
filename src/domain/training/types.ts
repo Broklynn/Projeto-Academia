@@ -37,6 +37,8 @@ export const SPLIT_FOCUSES = [
   'legs',
 ] as const;
 
+export const SPLIT_VARIANTS = ['A', 'B', 'C'] as const;
+
 export type WorkoutPlanId = string;
 export type WorkoutDayId = string;
 export type WorkoutExerciseId = string;
@@ -45,11 +47,13 @@ export type Rir = 0 | 1 | 2 | 3 | 4 | 5;
 export type Weekday = (typeof WEEKDAYS)[number];
 export type SplitType = (typeof SPLIT_TYPES)[number];
 export type SplitFocus = (typeof SPLIT_FOCUSES)[number];
+export type SplitVariant = (typeof SPLIT_VARIANTS)[number];
 
 export interface TrainingSplitDay {
   readonly order: number;
   readonly name: string;
   readonly focus: SplitFocus;
+  readonly variant: SplitVariant | null;
   readonly targetMuscles: readonly MuscleGroup[];
 }
 

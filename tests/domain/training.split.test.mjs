@@ -5,7 +5,7 @@ import exerciseDomain from '../../.expo/domain-tests/domain/exercise/index.js';
 import trainingDomain from '../../.expo/domain-tests/domain/training/index.js';
 
 const { MUSCLE_GROUPS } = exerciseDomain;
-const { buildHypertrophySplit } = trainingDomain;
+const { SPLIT_VARIANTS, buildHypertrophySplit } = trainingDomain;
 
 const EXPECTED_TARGET_MUSCLES = {
   full_body: MUSCLE_GROUPS,
@@ -22,19 +22,29 @@ function assertSplit(daysPerWeek, expectedType, expectedDays) {
   assert.equal(split.type, expectedType);
   assert.equal(split.daysPerWeek, daysPerWeek);
   assert.deepEqual(
-    split.days.map(({ order, name, focus }) => ({ order, name, focus })),
-    expectedDays.map(([name, focus], index) => ({
+    split.days.map(({ order, name, focus, variant }) => ({
+      order,
+      name,
+      focus,
+      variant,
+    })),
+    expectedDays.map(([name, focus, variant], index) => ({
       order: index + 1,
       name,
       focus,
+      variant,
     })),
   );
 }
 
+test('defines the supported split variants', () => {
+  assert.deepEqual(SPLIT_VARIANTS, ['A', 'B', 'C']);
+});
+
 test('builds the two-day full-body split', () => {
   assertSplit(2, 'full_body', [
-    ['Corpo Inteiro A', 'full_body'],
-    ['Corpo Inteiro B', 'full_body'],
+    ['Corpo Inteiro A', 'full_body', 'A'],
+    ['Corpo Inteiro B', 'full_body', 'B'],
   ]);
 
   for (const day of buildHypertrophySplit(2).days) {
@@ -44,39 +54,39 @@ test('builds the two-day full-body split', () => {
 
 test('builds the three-day full-body split', () => {
   assertSplit(3, 'full_body', [
-    ['Corpo Inteiro A', 'full_body'],
-    ['Corpo Inteiro B', 'full_body'],
-    ['Corpo Inteiro C', 'full_body'],
+    ['Corpo Inteiro A', 'full_body', 'A'],
+    ['Corpo Inteiro B', 'full_body', 'B'],
+    ['Corpo Inteiro C', 'full_body', 'C'],
   ]);
 });
 
 test('builds the four-day upper-lower split', () => {
   assertSplit(4, 'upper_lower', [
-    ['Superior A', 'upper'],
-    ['Inferior A', 'lower'],
-    ['Superior B', 'upper'],
-    ['Inferior B', 'lower'],
+    ['Superior A', 'upper', 'A'],
+    ['Inferior A', 'lower', 'A'],
+    ['Superior B', 'upper', 'B'],
+    ['Inferior B', 'lower', 'B'],
   ]);
 });
 
 test('builds the five-day upper-lower-push-pull-legs split', () => {
   assertSplit(5, 'upper_lower_push_pull_legs', [
-    ['Superior', 'upper'],
-    ['Inferior', 'lower'],
-    ['Empurrar', 'push'],
-    ['Puxar', 'pull'],
-    ['Pernas', 'legs'],
+    ['Superior', 'upper', null],
+    ['Inferior', 'lower', null],
+    ['Empurrar', 'push', null],
+    ['Puxar', 'pull', null],
+    ['Pernas', 'legs', null],
   ]);
 });
 
 test('builds the six-day push-pull-legs split', () => {
   assertSplit(6, 'push_pull_legs', [
-    ['Empurrar A', 'push'],
-    ['Puxar A', 'pull'],
-    ['Pernas A', 'legs'],
-    ['Empurrar B', 'push'],
-    ['Puxar B', 'pull'],
-    ['Pernas B', 'legs'],
+    ['Empurrar A', 'push', 'A'],
+    ['Puxar A', 'pull', 'A'],
+    ['Pernas A', 'legs', 'A'],
+    ['Empurrar B', 'push', 'B'],
+    ['Puxar B', 'pull', 'B'],
+    ['Pernas B', 'legs', 'B'],
   ]);
 });
 

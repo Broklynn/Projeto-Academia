@@ -4,6 +4,7 @@ import { MUSCLE_GROUPS, type MuscleGroup } from '../exercise/types';
 import type {
   SplitFocus,
   SplitType,
+  SplitVariant,
   TrainingSplit,
   TrainingSplitDay,
 } from './types';
@@ -11,6 +12,7 @@ import type {
 interface SplitDayTemplate {
   readonly name: string;
   readonly focus: SplitFocus;
+  readonly variant: SplitVariant | null;
 }
 
 interface SplitTemplate {
@@ -58,46 +60,46 @@ const HYPERTROPHY_SPLIT_TEMPLATES = {
   2: {
     type: 'full_body',
     days: [
-      { name: 'Corpo Inteiro A', focus: 'full_body' },
-      { name: 'Corpo Inteiro B', focus: 'full_body' },
+      { name: 'Corpo Inteiro A', focus: 'full_body', variant: 'A' },
+      { name: 'Corpo Inteiro B', focus: 'full_body', variant: 'B' },
     ],
   },
   3: {
     type: 'full_body',
     days: [
-      { name: 'Corpo Inteiro A', focus: 'full_body' },
-      { name: 'Corpo Inteiro B', focus: 'full_body' },
-      { name: 'Corpo Inteiro C', focus: 'full_body' },
+      { name: 'Corpo Inteiro A', focus: 'full_body', variant: 'A' },
+      { name: 'Corpo Inteiro B', focus: 'full_body', variant: 'B' },
+      { name: 'Corpo Inteiro C', focus: 'full_body', variant: 'C' },
     ],
   },
   4: {
     type: 'upper_lower',
     days: [
-      { name: 'Superior A', focus: 'upper' },
-      { name: 'Inferior A', focus: 'lower' },
-      { name: 'Superior B', focus: 'upper' },
-      { name: 'Inferior B', focus: 'lower' },
+      { name: 'Superior A', focus: 'upper', variant: 'A' },
+      { name: 'Inferior A', focus: 'lower', variant: 'A' },
+      { name: 'Superior B', focus: 'upper', variant: 'B' },
+      { name: 'Inferior B', focus: 'lower', variant: 'B' },
     ],
   },
   5: {
     type: 'upper_lower_push_pull_legs',
     days: [
-      { name: 'Superior', focus: 'upper' },
-      { name: 'Inferior', focus: 'lower' },
-      { name: 'Empurrar', focus: 'push' },
-      { name: 'Puxar', focus: 'pull' },
-      { name: 'Pernas', focus: 'legs' },
+      { name: 'Superior', focus: 'upper', variant: null },
+      { name: 'Inferior', focus: 'lower', variant: null },
+      { name: 'Empurrar', focus: 'push', variant: null },
+      { name: 'Puxar', focus: 'pull', variant: null },
+      { name: 'Pernas', focus: 'legs', variant: null },
     ],
   },
   6: {
     type: 'push_pull_legs',
     days: [
-      { name: 'Empurrar A', focus: 'push' },
-      { name: 'Puxar A', focus: 'pull' },
-      { name: 'Pernas A', focus: 'legs' },
-      { name: 'Empurrar B', focus: 'push' },
-      { name: 'Puxar B', focus: 'pull' },
-      { name: 'Pernas B', focus: 'legs' },
+      { name: 'Empurrar A', focus: 'push', variant: 'A' },
+      { name: 'Puxar A', focus: 'pull', variant: 'A' },
+      { name: 'Pernas A', focus: 'legs', variant: 'A' },
+      { name: 'Empurrar B', focus: 'push', variant: 'B' },
+      { name: 'Puxar B', focus: 'pull', variant: 'B' },
+      { name: 'Pernas B', focus: 'legs', variant: 'B' },
     ],
   },
 } as const satisfies Readonly<Record<TrainingDaysPerWeek, SplitTemplate>>;
@@ -114,6 +116,7 @@ export function buildHypertrophySplit(
       order: index + 1,
       name: day.name,
       focus: day.focus,
+      variant: day.variant,
       targetMuscles: [...TARGET_MUSCLES_BY_FOCUS[day.focus]],
     })),
   };

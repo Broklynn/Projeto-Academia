@@ -217,10 +217,180 @@ test('requires bodyweight explicitly instead of treating no equipment as bodywei
   assert.deepEqual(selectedIds(day, []), []);
 });
 
-test('uses the same selection for A and B days with equal focus and equipment', () => {
-  const [pushA, , , pushB] = buildHypertrophySplit(6).days;
+test('varies upper A and B by canonical eligible candidate index', () => {
+  const [upperA, , upperB] = buildHypertrophySplit(4).days;
 
-  assert.deepEqual(selectedIds(pushA), selectedIds(pushB));
+  assert.deepEqual(selectedIds(upperA), [
+    'barbell-bench-press',
+    'barbell-row',
+    'barbell-overhead-press',
+    'pull-up',
+    'dumbbell-lateral-raise',
+    'barbell-curl',
+    'cable-triceps-pushdown',
+  ]);
+  assert.deepEqual(selectedIds(upperB), [
+    'incline-barbell-bench-press',
+    'single-arm-dumbbell-row',
+    'dumbbell-shoulder-press',
+    'lat-pulldown',
+    'single-arm-cable-lateral-raise',
+    'dumbbell-curl',
+    'overhead-cable-triceps-extension',
+  ]);
+});
+
+test('varies push A and B while preserving the same slot policy', () => {
+  const [pushA, , , pushB] = buildHypertrophySplit(6).days;
+  const first = selectExercisesForSplitDay(pushA, ALL_EQUIPMENT);
+  const second = selectExercisesForSplitDay(pushB, ALL_EQUIPMENT);
+
+  assert.deepEqual(
+    first.exercises.map((exercise) => exercise.movementPattern),
+    EXPECTED_PATTERNS.push,
+  );
+  assert.deepEqual(
+    second.exercises.map((exercise) => exercise.movementPattern),
+    EXPECTED_PATTERNS.push,
+  );
+  assert.deepEqual(selectedIds(pushA), [
+    'barbell-bench-press',
+    'barbell-overhead-press',
+    'dumbbell-lateral-raise',
+    'cable-triceps-pushdown',
+  ]);
+  assert.deepEqual(selectedIds(pushB), [
+    'incline-barbell-bench-press',
+    'dumbbell-shoulder-press',
+    'single-arm-cable-lateral-raise',
+    'overhead-cable-triceps-extension',
+  ]);
+});
+
+test('varies pull A and B by eligible candidates', () => {
+  const [, pullA, , , pullB] = buildHypertrophySplit(6).days;
+
+  assert.deepEqual(selectedIds(pullA), [
+    'pull-up',
+    'barbell-row',
+    'barbell-curl',
+  ]);
+  assert.deepEqual(selectedIds(pullB), [
+    'lat-pulldown',
+    'single-arm-dumbbell-row',
+    'dumbbell-curl',
+  ]);
+});
+
+test('varies legs A and B and falls back where a slot has one candidate', () => {
+  const [, , legsA, , , legsB] = buildHypertrophySplit(6).days;
+
+  assert.deepEqual(selectedIds(legsA), [
+    'barbell-back-squat',
+    'barbell-romanian-deadlift',
+    'leg-extension',
+    'lying-leg-curl',
+    'barbell-hip-thrust',
+    'standing-calf-raise',
+    'cable-crunch',
+  ]);
+  assert.deepEqual(selectedIds(legsB), [
+    'barbell-front-squat',
+    'barbell-conventional-deadlift',
+    'leg-extension',
+    'seated-leg-curl',
+    'barbell-hip-thrust',
+    'seated-calf-raise',
+    'hanging-leg-raise',
+  ]);
+});
+
+test('selects first, second, and third eligible candidates for full-body A, B, and C', () => {
+  const [fullBodyA, fullBodyB, fullBodyC] = buildHypertrophySplit(3).days;
+
+  assert.deepEqual(selectedIds(fullBodyA), [
+    'barbell-bench-press',
+    'barbell-row',
+    'pull-up',
+    'barbell-back-squat',
+    'barbell-romanian-deadlift',
+    'standing-calf-raise',
+    'cable-crunch',
+  ]);
+  assert.deepEqual(selectedIds(fullBodyB), [
+    'incline-barbell-bench-press',
+    'single-arm-dumbbell-row',
+    'lat-pulldown',
+    'barbell-front-squat',
+    'barbell-conventional-deadlift',
+    'seated-calf-raise',
+    'hanging-leg-raise',
+  ]);
+  assert.deepEqual(selectedIds(fullBodyC), [
+    'dumbbell-bench-press',
+    'seated-cable-row',
+    'pull-up',
+    'leg-press',
+    'barbell-romanian-deadlift',
+    'standing-calf-raise',
+    'plank',
+  ]);
+});
+
+test('applies the variant after equipment filtering', () => {
+  const [, , upperB] = buildHypertrophySplit(4).days;
+  const result = selectExercisesForSplitDay(upperB, ['dumbbell', 'bench']);
+
+  assert.deepEqual(
+    result.exercises.map((exercise) => exercise.id),
+    [
+      'incline-dumbbell-press',
+      'single-arm-dumbbell-row',
+      'dumbbell-shoulder-press',
+      'dumbbell-lateral-raise',
+      'hammer-curl',
+      'dumbbell-overhead-triceps-extension',
+    ],
+  );
+  assert.deepEqual(result.missingPatterns, ['vertical_pull']);
+});
+
+test('keeps missing patterns for variant C when no candidate exists', () => {
+  const [, , fullBodyC] = buildHypertrophySplit(3).days;
+
+  assert.deepEqual(selectExercisesForSplitDay(fullBodyC, []), {
+    exercises: [],
+    missingPatterns: EXPECTED_PATTERNS.full_body,
+  });
+});
+
+test('keeps null variants on the original first-candidate behavior', () => {
+  const push = representativeDay(5, 'push');
+
+  assert.equal(push.variant, null);
+  assert.deepEqual(selectedIds(push), [
+    'barbell-bench-press',
+    'barbell-overhead-press',
+    'dumbbell-lateral-raise',
+    'cable-triceps-pushdown',
+  ]);
+});
+
+test('is deterministic for repeated upper B selections', () => {
+  const [, , upperB] = buildHypertrophySplit(4).days;
+
+  assert.deepEqual(selectedIds(upperB), selectedIds(upperB));
+});
+
+test('uses the explicit variant without deriving it from name or order', () => {
+  const [, , upperB] = buildHypertrophySplit(4).days;
+  const renamedAndReordered = {
+    ...upperB,
+    name: 'Treino sem marcador de apresentação',
+    order: 999,
+  };
+
+  assert.deepEqual(selectedIds(renamedAndReordered), selectedIds(upperB));
 });
 
 test('is deterministic, duplicate-free, and does not mutate its inputs or sources', () => {

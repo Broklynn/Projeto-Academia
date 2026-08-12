@@ -1,4 +1,10 @@
-export { SPLIT_FOCUSES, SPLIT_TYPES, RIR_LIMITS, WEEKDAYS } from './types';
+export {
+  SPLIT_FOCUSES,
+  SPLIT_TYPES,
+  SPLIT_VARIANTS,
+  RIR_LIMITS,
+  WEEKDAYS,
+} from './types';
 export type {
   ExercisePerformance,
   ProgressionAction,
@@ -9,6 +15,7 @@ export type {
   SetPerformance,
   SplitFocus,
   SplitType,
+  SplitVariant,
   TrainingSplit,
   TrainingSplitDay,
   Weekday,
