@@ -8,9 +8,16 @@ node_modules/
 dist/
 web-build/
 expo-env.d.ts
+coverage/
 
 # Native
 .kotlin/
+.gradle/
+build/
+local.properties
+*.apk
+*.aab
+*.keystore
 *.orig.*
 *.jks
 *.p8
@@ -22,13 +29,19 @@ expo-env.d.ts
 .metro-health-check*
 
 # debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# macOS
+# OS
 .DS_Store
+Thumbs.db
 *.pem
+
+# IDEs
+.idea/
+*.iml
 
 # environment files (keep the documented template)
 .env
@@ -38,6 +51,11 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-# generated native folders
+# temporary and generated output
+tmp/
+temp/
+cache/
+logs/
+
+# generated iOS folder (DuoFit is Android-only)
 /ios
-/android
