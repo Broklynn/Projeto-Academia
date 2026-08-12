@@ -17,6 +17,11 @@ export type {
   TrainingWeekSetAllocation,
   WeeklyDirectSetVolumeAnalysis,
 } from './analyze-set-volume';
+export { allocateWeeklyDirectSets } from './allocate-direct-sets';
+export type {
+  DirectSetAllocationConstraints,
+  WeeklyDirectSetAllocationResult,
+} from './allocate-direct-sets';
 export { buildHypertrophyTrainingSelection } from './build-training-selection';
 export type {
   BuildHypertrophyTrainingSelectionInput,
