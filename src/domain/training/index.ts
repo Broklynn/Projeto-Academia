@@ -1,4 +1,4 @@
-export { RIR_LIMITS, WEEKDAYS } from './types';
+export { SPLIT_FOCUSES, SPLIT_TYPES, RIR_LIMITS, WEEKDAYS } from './types';
 export type {
   ExercisePerformance,
   ProgressionAction,
@@ -7,6 +7,10 @@ export type {
   RepRange,
   Rir,
   SetPerformance,
+  SplitFocus,
+  SplitType,
+  TrainingSplit,
+  TrainingSplitDay,
   Weekday,
   WorkoutDay,
   WorkoutDayId,
@@ -17,6 +21,7 @@ export type {
   WorkoutSession,
   WorkoutSessionId,
 } from './types';
+export { buildHypertrophySplit } from './split';
 export {
   validateRepRange,
   validateSetPerformance,

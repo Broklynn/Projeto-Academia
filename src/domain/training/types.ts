@@ -1,5 +1,9 @@
-import type { AthleteId, TrainingGoal } from '../athlete/types';
-import type { ExerciseId } from '../exercise/types';
+import type {
+  AthleteId,
+  TrainingDaysPerWeek,
+  TrainingGoal,
+} from '../athlete/types';
+import type { ExerciseId, MuscleGroup } from '../exercise/types';
 import type { IsoDateTimeString } from '../types';
 
 export const RIR_LIMITS = {
@@ -17,12 +21,43 @@ export const WEEKDAYS = [
   'sunday',
 ] as const;
 
+export const SPLIT_TYPES = [
+  'full_body',
+  'upper_lower',
+  'upper_lower_push_pull_legs',
+  'push_pull_legs',
+] as const;
+
+export const SPLIT_FOCUSES = [
+  'full_body',
+  'upper',
+  'lower',
+  'push',
+  'pull',
+  'legs',
+] as const;
+
 export type WorkoutPlanId = string;
 export type WorkoutDayId = string;
 export type WorkoutExerciseId = string;
 export type WorkoutSessionId = string;
 export type Rir = 0 | 1 | 2 | 3 | 4 | 5;
 export type Weekday = (typeof WEEKDAYS)[number];
+export type SplitType = (typeof SPLIT_TYPES)[number];
+export type SplitFocus = (typeof SPLIT_FOCUSES)[number];
+
+export interface TrainingSplitDay {
+  readonly order: number;
+  readonly name: string;
+  readonly focus: SplitFocus;
+  readonly targetMuscles: readonly MuscleGroup[];
+}
+
+export interface TrainingSplit {
+  readonly type: SplitType;
+  readonly daysPerWeek: TrainingDaysPerWeek;
+  readonly days: readonly TrainingSplitDay[];
+}
 
 export interface RepRange {
   min: number;
