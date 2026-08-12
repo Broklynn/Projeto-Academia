@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import trainingValidation from '../../.expo/domain-tests/training/validation.js';
+import trainingValidation from '../../.expo/domain-tests/domain/training/validation.js';
 
 const { validateRepRange, validateSetPerformance, validateWorkoutExercise } = trainingValidation;
 

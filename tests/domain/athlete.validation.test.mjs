@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import athleteValidation from '../../.expo/domain-tests/athlete/validation.js';
+import athleteValidation from '../../.expo/domain-tests/domain/athlete/validation.js';
 
 const { validateAthleteProfile } = athleteValidation;
 

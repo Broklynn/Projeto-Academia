@@ -8,13 +8,14 @@
     "moduleResolution": "NodeNext",
     "noEmit": false,
     "outDir": ".expo/domain-tests",
-    "rootDir": "src/domain",
+    "rootDir": "src",
     "sourceMap": false,
     "target": "ES2022",
     "verbatimModuleSyntax": false
   },
   "include": [
-    "src/domain/**/*.ts"
+    "src/domain/**/*.ts",
+    "src/data/exercises/**/*.ts"
   ],
   "exclude": [
     "node_modules"
