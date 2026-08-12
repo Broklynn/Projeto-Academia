@@ -6,3 +6,4 @@ export {
   getExercisesByMovementPattern,
   getExercisesByPrimaryMuscle,
 } from './queries';
+export { getExerciseSubstitutes } from './substitutions';
