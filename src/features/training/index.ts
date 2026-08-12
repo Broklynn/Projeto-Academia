@@ -22,6 +22,12 @@ export type {
   DirectSetAllocationConstraints,
   WeeklyDirectSetAllocationResult,
 } from './allocate-direct-sets';
+export { augmentWeeklyDirectSetTargetsWithAccessories } from './augment-with-accessories';
+export type {
+  AccessoryExerciseAddition,
+  AccessoryExerciseConstraints,
+  WeeklyAccessoryAllocationResult,
+} from './augment-with-accessories';
 export { buildHypertrophyTrainingSelection } from './build-training-selection';
 export type {
   BuildHypertrophyTrainingSelectionInput,
