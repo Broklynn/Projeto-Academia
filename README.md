@@ -1,8 +1,8 @@
 # DuoFit
 
-Nome provisório de um aplicativo de treino para um casal montar, executar e acompanhar treinos de musculação. Esta etapa contém somente a fundação técnica, sem autenticação ou persistência de dados.
+Aplicativo de treino para um casal montar, executar e acompanhar treinos de musculação. O projeto está na fase de fundação técnica e modelagem do domínio, sem autenticação ou persistência de dados.
 
-## Stack
+## Tecnologias
 
 - Expo e React Native
 - TypeScript em modo estrito
@@ -37,7 +37,9 @@ npm run lint
 ## Estrutura
 
 - `src/app`: rotas e telas do Expo Router.
+- `src/domain`: contratos e regras independentes da interface.
+- `src/data/exercises`: catálogo local de exercícios e consultas puras.
+- `tests/domain`: testes do domínio e da integridade do catálogo.
 - `assets`: ícones e imagens estáticas da aplicação.
-- `src/components`, `src/features`, `src/domain`, `src/hooks`, `src/services`, `src/database`, `src/types`, `src/utils` e `src/tests` serão criados somente quando houver código que justifique cada diretório.
 - `app.json`: configuração do Expo para Android, iOS e Web.
 - `tsconfig.json`: configuração rigorosa do TypeScript e alias `@/` para `src/`.

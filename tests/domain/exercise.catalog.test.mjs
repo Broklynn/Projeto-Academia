@@ -61,6 +61,52 @@ const REQUIRED_EXERCISE_IDS = [
   'plank',
 ];
 
+const EXPECTED_EXERCISE_NAMES = {
+  'barbell-bench-press': 'Supino Reto com Barra',
+  'incline-barbell-bench-press': 'Supino Inclinado com Barra',
+  'dumbbell-bench-press': 'Supino Reto com Halteres',
+  'incline-dumbbell-press': 'Supino Inclinado com Halteres',
+  'machine-chest-press': 'Supino na Máquina',
+  'cable-chest-fly': 'Crucifixo na Polia',
+  'push-up': 'Flexão de Braços',
+  'pull-up': 'Barra Fixa',
+  'lat-pulldown': 'Puxada na Frente',
+  'barbell-row': 'Remada Curvada com Barra',
+  'single-arm-dumbbell-row': 'Remada Unilateral com Halter',
+  'seated-cable-row': 'Remada Baixa na Polia',
+  'machine-row': 'Remada na Máquina',
+  'barbell-overhead-press': 'Desenvolvimento com Barra',
+  'dumbbell-shoulder-press': 'Desenvolvimento com Halteres',
+  'dumbbell-lateral-raise': 'Elevação Lateral com Halteres',
+  'single-arm-cable-lateral-raise': 'Elevação Lateral Unilateral na Polia',
+  'reverse-dumbbell-fly': 'Crucifixo Inverso com Halteres',
+  'barbell-curl': 'Rosca Direta com Barra',
+  'dumbbell-curl': 'Rosca com Halteres',
+  'hammer-curl': 'Rosca Martelo',
+  'cable-curl': 'Rosca na Polia',
+  'cable-triceps-pushdown': 'Tríceps na Polia',
+  'overhead-cable-triceps-extension': 'Tríceps Francês na Polia',
+  'dumbbell-overhead-triceps-extension': 'Tríceps Francês com Halter',
+  'close-grip-barbell-bench-press': 'Supino Fechado com Barra',
+  'barbell-back-squat': 'Agachamento Livre com Barra',
+  'barbell-front-squat': 'Agachamento Frontal com Barra',
+  'leg-press': 'Leg Press',
+  'smith-machine-hack-squat': 'Agachamento Hack no Smith',
+  'leg-extension': 'Cadeira Extensora',
+  'dumbbell-bulgarian-split-squat': 'Agachamento Búlgaro com Halteres',
+  'walking-lunge': 'Avanço Caminhando',
+  'barbell-romanian-deadlift': 'Levantamento Terra Romeno com Barra',
+  'barbell-conventional-deadlift': 'Levantamento Terra Convencional com Barra',
+  'barbell-hip-thrust': 'Elevação Pélvica com Barra',
+  'lying-leg-curl': 'Mesa Flexora',
+  'seated-leg-curl': 'Cadeira Flexora',
+  'standing-calf-raise': 'Elevação de Panturrilha em Pé',
+  'seated-calf-raise': 'Elevação de Panturrilha Sentado',
+  'cable-crunch': 'Abdominal na Polia',
+  'hanging-leg-raise': 'Elevação de Pernas Suspenso',
+  plank: 'Prancha',
+};
+
 function assertUnique(values, message) {
   assert.equal(new Set(values).size, values.length, message);
 }
@@ -75,6 +121,11 @@ test('contains every required canonical exercise', () => {
 
   for (const id of REQUIRED_EXERCISE_IDS) {
     assert.ok(catalogIds.has(id), `missing required exercise: ${id}`);
+    assert.equal(
+      getExerciseById(id)?.name,
+      EXPECTED_EXERCISE_NAMES[id],
+      `${id} must use its canonical PT-BR name`,
+    );
   }
 });
 
@@ -138,7 +189,7 @@ test('covers every domain movement pattern', () => {
 });
 
 test('gets an exercise by an existing ID', () => {
-  assert.equal(getExerciseById('barbell-bench-press')?.name, 'Barbell Bench Press');
+  assert.equal(getExerciseById('barbell-bench-press')?.name, 'Supino Reto com Barra');
 });
 
 test('returns undefined for an unknown exercise ID', () => {
@@ -177,6 +228,67 @@ test('filters exercises by movement pattern in canonical order', () => {
   assert.deepEqual(
     hingeExercises,
     EXERCISE_CATALOG.filter((exercise) => exercise.movementPattern === 'hinge'),
+  );
+});
+
+test('assigns refined canonical patterns to isolation exercises', () => {
+  const expectedPatterns = {
+    'cable-chest-fly': 'horizontal_adduction',
+    'reverse-dumbbell-fly': 'horizontal_abduction',
+    'dumbbell-lateral-raise': 'shoulder_abduction',
+    'single-arm-cable-lateral-raise': 'shoulder_abduction',
+    'leg-extension': 'knee_extension',
+    'lying-leg-curl': 'knee_flexion',
+    'seated-leg-curl': 'knee_flexion',
+    'barbell-hip-thrust': 'hip_extension',
+  };
+
+  for (const [id, movementPattern] of Object.entries(expectedPatterns)) {
+    assert.equal(
+      getExerciseById(id)?.movementPattern,
+      movementPattern,
+      `${id} must use ${movementPattern}`,
+    );
+  }
+});
+
+test('preserves canonical patterns for compound exercises', () => {
+  const expectedPatterns = {
+    'barbell-back-squat': 'squat',
+    'barbell-romanian-deadlift': 'hinge',
+    'barbell-overhead-press': 'vertical_push',
+    'barbell-row': 'horizontal_pull',
+    'pull-up': 'vertical_pull',
+    'barbell-bench-press': 'horizontal_push',
+  };
+
+  for (const [id, movementPattern] of Object.entries(expectedPatterns)) {
+    assert.equal(
+      getExerciseById(id)?.movementPattern,
+      movementPattern,
+      `${id} must remain ${movementPattern}`,
+    );
+  }
+});
+
+test('filters knee flexion exercises without including hip hinges', () => {
+  assert.deepEqual(
+    getExercisesByMovementPattern('knee_flexion').map((exercise) => exercise.name),
+    ['Mesa Flexora', 'Cadeira Flexora'],
+  );
+  assert.ok(
+    !getExercisesByMovementPattern('knee_flexion').some(
+      (exercise) => exercise.id === 'barbell-romanian-deadlift',
+    ),
+  );
+});
+
+test('filters shoulder abduction exercises in canonical order', () => {
+  assert.deepEqual(
+    getExercisesByMovementPattern('shoulder_abduction').map(
+      (exercise) => exercise.name,
+    ),
+    ['Elevação Lateral com Halteres', 'Elevação Lateral Unilateral na Polia'],
   );
 });
 
