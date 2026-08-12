@@ -17,6 +17,13 @@ export type {
   TrainingWeekSetAllocation,
   WeeklyDirectSetVolumeAnalysis,
 } from './analyze-set-volume';
+export { analyzeWeeklySessionDuration } from './analyze-session-duration';
+export type {
+  SessionDurationConstraint,
+  SessionDurationModel,
+  TrainingDayDurationStatus,
+  WeeklySessionDurationAnalysis,
+} from './analyze-session-duration';
 export { allocateWeeklyDirectSets } from './allocate-direct-sets';
 export type {
   DirectSetAllocationConstraints,

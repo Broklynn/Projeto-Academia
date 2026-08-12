@@ -4,7 +4,10 @@ import {
   type MuscleGroup,
 } from '../../domain/exercise';
 import type { HypertrophyWeeklyVolumePolicy } from '../../domain/training';
-import type { ValidationResult } from '../../domain/validation';
+import {
+  type ValidationResult,
+  validationResultFromErrors,
+} from '../../domain/validation';
 
 import type { TrainingWeekSelection } from './build-training-selection';
 
@@ -77,10 +80,10 @@ function validatePolicy(policy: HypertrophyWeeklyVolumePolicy): string[] {
   return errors;
 }
 
-function validateAllocation(
+export function validateTrainingWeekSetAllocation(
   week: TrainingWeekSelection,
   allocation: TrainingWeekSetAllocation,
-): string[] {
+): ValidationResult {
   const errors: string[] = [];
   const seenDayOrders = new Set<number>();
 
@@ -133,7 +136,7 @@ function validateAllocation(
     });
   });
 
-  return errors;
+  return validationResultFromErrors(errors);
 }
 
 export function analyzeWeeklyDirectSetVolume(
@@ -141,10 +144,15 @@ export function analyzeWeeklyDirectSetVolume(
   allocation: TrainingWeekSetAllocation,
   policy: HypertrophyWeeklyVolumePolicy,
 ): ValidationResult<WeeklyDirectSetVolumeAnalysis> {
-  const errors = [
-    ...validatePolicy(policy),
-    ...validateAllocation(week, allocation),
-  ];
+  const allocationValidation = validateTrainingWeekSetAllocation(
+    week,
+    allocation,
+  );
+  const errors = [...validatePolicy(policy)];
+
+  if (!allocationValidation.valid) {
+    errors.push(...allocationValidation.errors);
+  }
 
   if (errors.length > 0) {
     return { valid: false, errors };

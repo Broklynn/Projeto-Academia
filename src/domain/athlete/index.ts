@@ -13,4 +13,7 @@ export type {
   TrainingGoal,
   TrainingPreferences,
 } from './types';
-export { validateAthleteProfile } from './validation';
+export {
+  validateAthleteProfile,
+  validateSessionDurationMinutes,
+} from './validation';

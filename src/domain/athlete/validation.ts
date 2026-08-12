@@ -10,6 +10,26 @@ import {
   type AthleteProfile,
 } from './types';
 
+export function validateSessionDurationMinutes(
+  sessionDurationMinutes: number,
+): ValidationResult {
+  const errors: string[] = [];
+
+  if (
+    !isIntegerInRange(
+      sessionDurationMinutes,
+      SESSION_DURATION_MINUTES_LIMITS.min,
+      SESSION_DURATION_MINUTES_LIMITS.max,
+    )
+  ) {
+    errors.push(
+      `sessionDurationMinutes must be an integer between ${SESSION_DURATION_MINUTES_LIMITS.min} and ${SESSION_DURATION_MINUTES_LIMITS.max}`,
+    );
+  }
+
+  return validationResultFromErrors(errors);
+}
+
 export function validateAthleteProfile(profile: AthleteProfile): ValidationResult {
   const errors: string[] = [];
 
@@ -33,16 +53,11 @@ export function validateAthleteProfile(profile: AthleteProfile): ValidationResul
     );
   }
 
-  if (
-    !isIntegerInRange(
-      profile.sessionDurationMinutes,
-      SESSION_DURATION_MINUTES_LIMITS.min,
-      SESSION_DURATION_MINUTES_LIMITS.max,
-    )
-  ) {
-    errors.push(
-      `sessionDurationMinutes must be an integer between ${SESSION_DURATION_MINUTES_LIMITS.min} and ${SESSION_DURATION_MINUTES_LIMITS.max}`,
-    );
+  const sessionDurationResult = validateSessionDurationMinutes(
+    profile.sessionDurationMinutes,
+  );
+  if (!sessionDurationResult.valid) {
+    errors.push(...sessionDurationResult.errors);
   }
 
   if (profile.movementRestrictions.some((restriction) => restriction.trim().length === 0)) {
