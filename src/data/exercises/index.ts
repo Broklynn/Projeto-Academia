@@ -1,4 +1,5 @@
 export { EXERCISE_CATALOG } from './catalog';
+export { getExerciseCandidatesForSplitDay } from './candidates';
 export {
   getExerciseById,
   getExercisesAvailableWithEquipment,

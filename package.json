@@ -30,7 +30,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "npm run test:domain",
-    "test:domain": "tsc --project tsconfig.domain-tests.json && node --test tests/domain/athlete.validation.test.mjs tests/domain/exercise.catalog.test.mjs tests/domain/exercise.substitutions.test.mjs tests/domain/training.split.test.mjs tests/domain/training.validation.test.mjs",
+    "test:domain": "tsc --project tsconfig.domain-tests.json && node --test tests/domain/athlete.validation.test.mjs tests/domain/exercise.candidates.test.mjs tests/domain/exercise.catalog.test.mjs tests/domain/exercise.substitutions.test.mjs tests/domain/training.split.test.mjs tests/domain/training.validation.test.mjs",
     "typecheck": "tsc --noEmit"
   },
   "private": true
