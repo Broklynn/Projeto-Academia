@@ -30,6 +30,14 @@ export type {
 } from './types';
 export { buildHypertrophySplit } from './split';
 export {
+  buildDefaultHypertrophyWeeklyVolumePolicy,
+  DEFAULT_HYPERTROPHY_WEEKLY_SET_TARGET,
+} from './volume-policy';
+export type {
+  HypertrophyWeeklyVolumePolicy,
+  MuscleWeeklyVolumeTarget,
+} from './volume-policy';
+export {
   validateRepRange,
   validateSetPerformance,
   validateWorkoutExercise,
