@@ -9,6 +9,14 @@ export type {
   MuscleParticipation,
   WeeklyMuscleParticipationAnalysis,
 } from './analyze-muscle-participation';
+export { analyzeWeeklyDirectSetVolume } from './analyze-set-volume';
+export type {
+  ExerciseSetAllocation,
+  MuscleWeeklySetStatus,
+  TrainingDaySetAllocation,
+  TrainingWeekSetAllocation,
+  WeeklyDirectSetVolumeAnalysis,
+} from './analyze-set-volume';
 export { buildHypertrophyTrainingSelection } from './build-training-selection';
 export type {
   BuildHypertrophyTrainingSelectionInput,
