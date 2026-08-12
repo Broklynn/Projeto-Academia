@@ -8,3 +8,8 @@ export {
   getExercisesByPrimaryMuscle,
 } from './queries';
 export { getExerciseSubstitutes } from './substitutions';
+export {
+  getRequiredMovementPatternsForFocus,
+  selectExercisesForSplitDay,
+} from './selection';
+export type { ExerciseSelectionResult } from './selection';
