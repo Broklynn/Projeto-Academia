@@ -24,10 +24,14 @@ export type {
   TrainingDayDurationStatus,
   WeeklySessionDurationAnalysis,
 } from './analyze-session-duration';
-export { allocateWeeklyDirectSets } from './allocate-direct-sets';
+export {
+  allocateWeeklyDirectSets,
+  allocateWeeklyDirectSetsWithinDuration,
+} from './allocate-direct-sets';
 export type {
   DirectSetAllocationConstraints,
   WeeklyDirectSetAllocationResult,
+  WeeklyDurationConstrainedSetAllocationResult,
 } from './allocate-direct-sets';
 export { augmentWeeklyDirectSetTargetsWithAccessories } from './augment-with-accessories';
 export type {
