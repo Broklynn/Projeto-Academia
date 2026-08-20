@@ -6,14 +6,19 @@ import {
   type ExerciseId,
   type MuscleGroup,
 } from '../../domain/exercise';
-import type { HypertrophyWeeklyVolumePolicy } from '../../domain/training';
+import type {
+  HypertrophySetCreditPolicy,
+  HypertrophyWeeklyVolumePolicy,
+} from '../../domain/training';
 import type { ValidationResult } from '../../domain/validation';
 
 import {
+  allocateWeeklyCreditedSetsWithinDuration,
   allocateWeeklyDirectSets,
   allocateWeeklyDirectSetsWithinDuration,
   type DirectSetAllocationConstraints,
 } from './allocate-direct-sets';
+import type { WeeklyCreditedSetVolumeAnalysis } from './analyze-credited-set-volume';
 import type {
   SessionDurationConstraint,
   WeeklySessionDurationAnalysis,
@@ -48,33 +53,48 @@ export interface WeeklyDurationAwareAccessoryAllocationResult {
   readonly durationAnalysis: WeeklySessionDurationAnalysis;
 }
 
+export interface WeeklyCreditedAccessoryAllocationResult {
+  readonly week: TrainingWeekSelection;
+  readonly accessoryAdditions: readonly AccessoryExerciseAddition[];
+  readonly allocation: TrainingWeekSetAllocation;
+  readonly creditedVolumeAnalysis: WeeklyCreditedSetVolumeAnalysis;
+  readonly durationAnalysis: WeeklySessionDurationAnalysis;
+}
+
 interface AccessoryAllocationSnapshot {
   readonly allocation: TrainingWeekSetAllocation;
-  readonly volumeAnalysis: WeeklyDirectSetVolumeAnalysis;
   readonly durationAnalysis: WeeklySessionDurationAnalysis | undefined;
 }
 
-interface AccessoryAugmentationCoreResult {
-  readonly week: TrainingWeekSelection;
-  readonly accessoryAdditions: readonly AccessoryExerciseAddition[];
-  readonly snapshot: AccessoryAllocationSnapshot;
+interface DirectAccessoryAllocationSnapshot
+  extends AccessoryAllocationSnapshot {
+  readonly volumeAnalysis: WeeklyDirectSetVolumeAnalysis;
 }
 
-function remainingSetsFor(
+interface CreditedAccessoryAllocationSnapshot
+  extends AccessoryAllocationSnapshot {
+  readonly creditedVolumeAnalysis: WeeklyCreditedSetVolumeAnalysis;
+  readonly durationAnalysis: WeeklySessionDurationAnalysis;
+}
+
+interface AccessoryAugmentationCoreResult<
+  Snapshot extends AccessoryAllocationSnapshot,
+> {
+  readonly week: TrainingWeekSelection;
+  readonly accessoryAdditions: readonly AccessoryExerciseAddition[];
+  readonly snapshot: Snapshot;
+}
+
+type SnapshotValidationResult<Snapshot> =
+  | { valid: false; errors: string[] }
+  | { valid: true; value: Snapshot };
+
+function remainingDirectSetsFor(
   analysis: WeeklyDirectSetVolumeAnalysis,
   muscle: MuscleGroup,
 ): number {
   return analysis.muscles.find((status) => status.muscle === muscle)!
     .remainingSetsToTarget;
-}
-
-function hasNoWorseDeficit(
-  before: WeeklyDirectSetVolumeAnalysis,
-  after: WeeklyDirectSetVolumeAnalysis,
-): boolean {
-  return MUSCLE_GROUPS.every(
-    (muscle) => remainingSetsFor(after, muscle) <= remainingSetsFor(before, muscle),
-  );
 }
 
 function allocatedSetsForExercise(
@@ -124,14 +144,20 @@ function validateAccessoryConstraints(
   return { valid: true };
 }
 
-function augmentWithAccessories(
+function augmentWithAccessories<Snapshot extends AccessoryAllocationSnapshot>(
   week: TrainingWeekSelection,
   availableEquipment: readonly Equipment[],
   accessoryConstraints: AccessoryExerciseConstraints,
   allocate: (
     candidateWeek: TrainingWeekSelection,
-  ) => ValidationResult<AccessoryAllocationSnapshot>,
-): ValidationResult<AccessoryAugmentationCoreResult> {
+  ) => SnapshotValidationResult<Snapshot>,
+  getMusclesBelowTarget: (snapshot: Snapshot) => readonly MuscleGroup[],
+  getRemainingSetsToTarget: (
+    snapshot: Snapshot,
+    muscle: MuscleGroup,
+  ) => number,
+  isSnapshotAcceptable: (snapshot: Snapshot) => boolean,
+): ValidationResult<AccessoryAugmentationCoreResult<Snapshot>> {
   const accessoryConstraintsValidation = validateAccessoryConstraints(
     accessoryConstraints,
   );
@@ -151,12 +177,12 @@ function augmentWithAccessories(
   const accessoryAdditions: AccessoryExerciseAddition[] = [];
   const additionalExercisesByDay = week.days.map(() => 0);
 
-  while (currentSnapshot.volumeAnalysis.musclesBelowTarget.length > 0) {
+  while (getMusclesBelowTarget(currentSnapshot).length > 0) {
     let addedAccessoryInPass = false;
 
     for (const muscle of MUSCLE_GROUPS) {
-      const remainingBefore = remainingSetsFor(
-        currentSnapshot.volumeAnalysis,
+      const remainingBefore = getRemainingSetsToTarget(
+        currentSnapshot,
         muscle,
       );
 
@@ -201,13 +227,15 @@ function augmentWithAccessories(
           }
 
           const targetImproved =
-            remainingSetsFor(
-              tentativeAllocation.value.volumeAnalysis,
-              muscle,
-            ) < remainingBefore;
-          const noMuscleWorsened = hasNoWorseDeficit(
-            currentSnapshot.volumeAnalysis,
-            tentativeAllocation.value.volumeAnalysis,
+            getRemainingSetsToTarget(tentativeAllocation.value, muscle) <
+            remainingBefore;
+          const noMuscleWorsened = MUSCLE_GROUPS.every(
+            (candidateMuscle) =>
+              getRemainingSetsToTarget(
+                tentativeAllocation.value,
+                candidateMuscle,
+              ) <=
+              getRemainingSetsToTarget(currentSnapshot, candidateMuscle),
           );
           const candidateReceivedSets =
             allocatedSetsForExercise(
@@ -215,16 +243,12 @@ function augmentWithAccessories(
               daySelection.day.order,
               candidate.id,
             ) >= 1;
-          const durationFits =
-            !tentativeAllocation.value.durationAnalysis ||
-            tentativeAllocation.value.durationAnalysis.daysExceedingDuration
-              .length === 0;
 
           if (
             !targetImproved ||
             !noMuscleWorsened ||
             !candidateReceivedSets ||
-            !durationFits
+            !isSnapshotAcceptable(tentativeAllocation.value)
           ) {
             continue;
           }
@@ -270,7 +294,7 @@ export function augmentWeeklyDirectSetTargetsWithAccessories(
   setConstraints: DirectSetAllocationConstraints,
   accessoryConstraints: AccessoryExerciseConstraints,
 ): ValidationResult<WeeklyAccessoryAllocationResult> {
-  const result = augmentWithAccessories(
+  const result = augmentWithAccessories<DirectAccessoryAllocationSnapshot>(
     week,
     availableEquipment,
     accessoryConstraints,
@@ -292,6 +316,12 @@ export function augmentWeeklyDirectSetTargetsWithAccessories(
           }
         : allocation;
     },
+    (snapshot) => snapshot.volumeAnalysis.musclesBelowTarget,
+    (snapshot, muscle) =>
+      remainingDirectSetsFor(snapshot.volumeAnalysis, muscle),
+    (snapshot) =>
+      !snapshot.durationAnalysis ||
+      snapshot.durationAnalysis.daysExceedingDuration.length === 0,
   );
 
   if (!result.valid) {
@@ -317,7 +347,7 @@ export function augmentWeeklyDirectSetTargetsWithAccessoriesWithinDuration(
   accessoryConstraints: AccessoryExerciseConstraints,
   durationConstraint: SessionDurationConstraint,
 ): ValidationResult<WeeklyDurationAwareAccessoryAllocationResult> {
-  const result = augmentWithAccessories(
+  const result = augmentWithAccessories<DirectAccessoryAllocationSnapshot>(
     week,
     availableEquipment,
     accessoryConstraints,
@@ -328,6 +358,12 @@ export function augmentWeeklyDirectSetTargetsWithAccessoriesWithinDuration(
         setConstraints,
         durationConstraint,
       ),
+    (snapshot) => snapshot.volumeAnalysis.musclesBelowTarget,
+    (snapshot, muscle) =>
+      remainingDirectSetsFor(snapshot.volumeAnalysis, muscle),
+    (snapshot) =>
+      !snapshot.durationAnalysis ||
+      snapshot.durationAnalysis.daysExceedingDuration.length === 0,
   );
 
   if (!result.valid) {
@@ -351,6 +387,54 @@ export function augmentWeeklyDirectSetTargetsWithAccessoriesWithinDuration(
       allocation: result.value.snapshot.allocation,
       volumeAnalysis: result.value.snapshot.volumeAnalysis,
       durationAnalysis,
+    },
+  };
+}
+
+export function augmentWeeklyCreditedSetTargetsWithAccessoriesWithinDuration(
+  week: TrainingWeekSelection,
+  availableEquipment: readonly Equipment[],
+  volumePolicy: HypertrophyWeeklyVolumePolicy,
+  creditPolicy: HypertrophySetCreditPolicy,
+  setConstraints: DirectSetAllocationConstraints,
+  accessoryConstraints: AccessoryExerciseConstraints,
+  durationConstraint: SessionDurationConstraint,
+): ValidationResult<WeeklyCreditedAccessoryAllocationResult> {
+  const result = augmentWithAccessories<CreditedAccessoryAllocationSnapshot>(
+    week,
+    availableEquipment,
+    accessoryConstraints,
+    (candidateWeek) =>
+      allocateWeeklyCreditedSetsWithinDuration(
+        candidateWeek,
+        volumePolicy,
+        creditPolicy,
+        setConstraints,
+        durationConstraint,
+      ),
+    (snapshot) =>
+      snapshot.creditedVolumeAnalysis.musclesBelowCreditedTarget,
+    (snapshot, muscle) =>
+      snapshot.creditedVolumeAnalysis.muscles.find(
+        (status) => status.muscle === muscle,
+      )!.remainingCreditedSetsToTarget,
+    (snapshot) =>
+      snapshot.creditedVolumeAnalysis.musclesAboveCreditedTarget.length === 0 &&
+      snapshot.durationAnalysis.daysExceedingDuration.length === 0,
+  );
+
+  if (!result.valid) {
+    return result;
+  }
+
+  return {
+    valid: true,
+    value: {
+      week: result.value.week,
+      accessoryAdditions: result.value.accessoryAdditions,
+      allocation: result.value.snapshot.allocation,
+      creditedVolumeAnalysis: result.value.snapshot.creditedVolumeAnalysis,
+      durationAnalysis: result.value.snapshot.durationAnalysis,
     },
   };
 }

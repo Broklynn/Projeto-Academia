@@ -41,6 +41,7 @@ export type {
   WeeklyDurationConstrainedSetAllocationResult,
 } from './allocate-direct-sets';
 export {
+  augmentWeeklyCreditedSetTargetsWithAccessoriesWithinDuration,
   augmentWeeklyDirectSetTargetsWithAccessories,
   augmentWeeklyDirectSetTargetsWithAccessoriesWithinDuration,
 } from './augment-with-accessories';
@@ -48,6 +49,7 @@ export type {
   AccessoryExerciseAddition,
   AccessoryExerciseConstraints,
   WeeklyAccessoryAllocationResult,
+  WeeklyCreditedAccessoryAllocationResult,
   WeeklyDurationAwareAccessoryAllocationResult,
 } from './augment-with-accessories';
 export { buildHypertrophyTrainingSelection } from './build-training-selection';
