@@ -32,9 +32,11 @@ export type {
 export {
   allocateWeeklyDirectSets,
   allocateWeeklyDirectSetsWithinDuration,
+  allocateWeeklyCreditedSetsWithinDuration,
 } from './allocate-direct-sets';
 export type {
   DirectSetAllocationConstraints,
+  WeeklyCreditedSetAllocationResult,
   WeeklyDirectSetAllocationResult,
   WeeklyDurationConstrainedSetAllocationResult,
 } from './allocate-direct-sets';

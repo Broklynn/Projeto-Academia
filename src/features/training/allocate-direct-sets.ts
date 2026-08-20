@@ -1,7 +1,18 @@
-import { MUSCLE_GROUPS, type MuscleGroup } from '../../domain/exercise';
-import type { HypertrophyWeeklyVolumePolicy } from '../../domain/training';
+import {
+  MUSCLE_GROUPS,
+  type Exercise,
+  type MuscleGroup,
+} from '../../domain/exercise';
+import type {
+  HypertrophySetCreditPolicy,
+  HypertrophyWeeklyVolumePolicy,
+} from '../../domain/training';
 import type { ValidationResult } from '../../domain/validation';
 
+import {
+  analyzeWeeklyCreditedSetVolume,
+  type WeeklyCreditedSetVolumeAnalysis,
+} from './analyze-credited-set-volume';
 import {
   analyzeWeeklyDirectSetVolume,
   type TrainingWeekSetAllocation,
@@ -30,9 +41,16 @@ export interface WeeklyDurationConstrainedSetAllocationResult {
   readonly durationAnalysis: WeeklySessionDurationAnalysis;
 }
 
+export interface WeeklyCreditedSetAllocationResult {
+  readonly allocation: TrainingWeekSetAllocation;
+  readonly creditedVolumeAnalysis: WeeklyCreditedSetVolumeAnalysis;
+  readonly durationAnalysis: WeeklySessionDurationAnalysis;
+}
+
 interface DirectSetAttempt {
   readonly dayIndex: number;
   readonly currentExerciseSets: number;
+  readonly exercise: Exercise;
 }
 
 interface RoundRobinHooks {
@@ -73,12 +91,15 @@ function marginalDurationForSet(
 
 function allocateDirectSetsRoundRobin(
   week: TrainingWeekSelection,
-  initialAnalysis: WeeklyDirectSetVolumeAnalysis,
+  muscleTargets: readonly {
+    readonly muscle: MuscleGroup;
+    readonly targetSetsPerWeek: number;
+  }[],
   constraints: DirectSetAllocationConstraints,
   hooks: RoundRobinHooks = {},
 ): TrainingWeekSetAllocation {
   const targetSetsByMuscle = new Map(
-    initialAnalysis.muscles.map((status) => [
+    muscleTargets.map((status) => [
       status.muscle,
       status.targetSetsPerWeek,
     ]),
@@ -116,7 +137,7 @@ function allocateDirectSetsRoundRobin(
             (allocatedDirectSetsByMuscle.get(muscle) ?? 0) <
             targetSetsByMuscle.get(muscle)!,
         );
-        const attempt = { dayIndex, currentExerciseSets };
+        const attempt = { dayIndex, currentExerciseSets, exercise };
 
         if (
           !canAddSetForMuscles ||
@@ -184,7 +205,7 @@ export function allocateWeeklyDirectSets(
 
   const allocation = allocateDirectSetsRoundRobin(
     week,
-    emptyAnalysis.value,
+    emptyAnalysis.value.muscles,
     constraints,
   );
   const finalAnalysis = analyzeWeeklyDirectSetVolume(week, allocation, policy);
@@ -241,7 +262,7 @@ export function allocateWeeklyDirectSetsWithinDuration(
   const estimatedDurationByDay = week.days.map(() => 0);
   const allocation = allocateDirectSetsRoundRobin(
     week,
-    emptyVolumeAnalysis.value,
+    emptyVolumeAnalysis.value.muscles,
     setConstraints,
     {
       canAddSet: ({ dayIndex, currentExerciseSets }) => {
@@ -290,6 +311,149 @@ export function allocateWeeklyDirectSetsWithinDuration(
     value: {
       allocation,
       volumeAnalysis: finalVolumeAnalysis.value,
+      durationAnalysis: finalDurationAnalysis.value,
+    },
+  };
+}
+
+export function allocateWeeklyCreditedSetsWithinDuration(
+  week: TrainingWeekSelection,
+  volumePolicy: HypertrophyWeeklyVolumePolicy,
+  creditPolicy: HypertrophySetCreditPolicy,
+  setConstraints: DirectSetAllocationConstraints,
+  durationConstraint: SessionDurationConstraint,
+): ValidationResult<WeeklyCreditedSetAllocationResult> {
+  const setConstraintsValidation = validateSetConstraints(setConstraints);
+  const emptyCreditedVolumeAnalysis = analyzeWeeklyCreditedSetVolume(
+    week,
+    { days: [] },
+    volumePolicy,
+    creditPolicy,
+  );
+  const emptyDurationAnalysis = analyzeWeeklySessionDuration(
+    week,
+    { days: [] },
+    durationConstraint.sessionDurationMinutes,
+    durationConstraint.durationModel,
+  );
+
+  if (
+    !setConstraintsValidation.valid ||
+    !emptyCreditedVolumeAnalysis.valid ||
+    !emptyDurationAnalysis.valid
+  ) {
+    return {
+      valid: false,
+      errors: [
+        ...(setConstraintsValidation.valid
+          ? []
+          : setConstraintsValidation.errors),
+        ...(emptyCreditedVolumeAnalysis.valid
+          ? []
+          : emptyCreditedVolumeAnalysis.errors),
+        ...(emptyDurationAnalysis.valid ? [] : emptyDurationAnalysis.errors),
+      ],
+    };
+  }
+
+  const targetSetsByMuscle = new Map(
+    emptyCreditedVolumeAnalysis.value.muscles.map((status) => [
+      status.muscle,
+      status.targetSetsPerWeek,
+    ]),
+  );
+  const creditedSetsByMuscle = new Map<MuscleGroup, number>(
+    MUSCLE_GROUPS.map((muscle) => [muscle, 0]),
+  );
+  const estimatedDurationByDay = week.days.map(() => 0);
+  const allocation = allocateDirectSetsRoundRobin(
+    week,
+    emptyCreditedVolumeAnalysis.value.muscles,
+    setConstraints,
+    {
+      canAddSet: ({ dayIndex, currentExerciseSets, exercise }) => {
+        const marginalDuration = marginalDurationForSet(
+          durationConstraint.durationModel,
+          currentExerciseSets,
+        );
+        const fitsDuration =
+          estimatedDurationByDay[dayIndex]! + marginalDuration <=
+          durationConstraint.sessionDurationMinutes;
+        const creditedIncrements = [
+          ...exercise.primaryMuscles.map((muscle) => ({ muscle, credit: 1 })),
+          ...exercise.secondaryMuscles.map((muscle) => ({
+            muscle,
+            credit: creditPolicy.indirectSetCredit,
+          })),
+        ];
+        const noMuscleExceedsTarget = creditedIncrements.every(
+          ({ muscle, credit }) =>
+            (creditedSetsByMuscle.get(muscle) ?? 0) + credit <=
+            targetSetsByMuscle.get(muscle)!,
+        );
+        const atLeastOneMuscleNeedsCredit = creditedIncrements.some(
+          ({ muscle, credit }) =>
+            credit > 0 &&
+            (creditedSetsByMuscle.get(muscle) ?? 0) <
+              targetSetsByMuscle.get(muscle)!,
+        );
+
+        return (
+          fitsDuration &&
+          noMuscleExceedsTarget &&
+          atLeastOneMuscleNeedsCredit
+        );
+      },
+      onSetAdded: ({ dayIndex, currentExerciseSets, exercise }) => {
+        estimatedDurationByDay[dayIndex] =
+          estimatedDurationByDay[dayIndex]! +
+          marginalDurationForSet(
+            durationConstraint.durationModel,
+            currentExerciseSets,
+          );
+
+        for (const muscle of exercise.primaryMuscles) {
+          creditedSetsByMuscle.set(
+            muscle,
+            (creditedSetsByMuscle.get(muscle) ?? 0) + 1,
+          );
+        }
+        for (const muscle of exercise.secondaryMuscles) {
+          creditedSetsByMuscle.set(
+            muscle,
+            (creditedSetsByMuscle.get(muscle) ?? 0) +
+              creditPolicy.indirectSetCredit,
+          );
+        }
+      },
+    },
+  );
+  const finalCreditedVolumeAnalysis = analyzeWeeklyCreditedSetVolume(
+    week,
+    allocation,
+    volumePolicy,
+    creditPolicy,
+  );
+  const finalDurationAnalysis = analyzeWeeklySessionDuration(
+    week,
+    allocation,
+    durationConstraint.sessionDurationMinutes,
+    durationConstraint.durationModel,
+  );
+
+  if (!finalCreditedVolumeAnalysis.valid) {
+    return finalCreditedVolumeAnalysis;
+  }
+
+  if (!finalDurationAnalysis.valid) {
+    return finalDurationAnalysis;
+  }
+
+  return {
+    valid: true,
+    value: {
+      allocation,
+      creditedVolumeAnalysis: finalCreditedVolumeAnalysis.value,
       durationAnalysis: finalDurationAnalysis.value,
     },
   };
