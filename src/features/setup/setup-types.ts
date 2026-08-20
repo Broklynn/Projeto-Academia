@@ -9,6 +9,14 @@ export interface SetupDraft {
   sessionDurationMinutes: number | null;
 }
 
+export interface CompleteSetup {
+  availableEquipment: Equipment[];
+  daysPerWeek: TrainingDaysPerWeek;
+  experience: ExperienceLevel;
+  goal: TrainingGoal;
+  sessionDurationMinutes: number;
+}
+
 export type SetupStep = 1 | 2 | 3 | 4 | 5;
 export type SetupView = SetupStep | 'summary';
 

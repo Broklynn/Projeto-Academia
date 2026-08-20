@@ -5,6 +5,7 @@ export interface SetupOption<T> { description?: string; label: string; value: T 
 
 export const GOAL_OPTIONS = [
   { label: 'Hipertrofia', description: 'Foco no desenvolvimento de massa muscular.', value: 'hypertrophy' },
+  { label: 'Emagrecimento', description: 'Foco em uma rotina consistente para apoiar seu objetivo.', value: 'weight_loss' },
   { label: 'Força', description: 'Foco em evoluir sua capacidade nos movimentos.', value: 'strength' },
   { label: 'Condicionamento geral', description: 'Uma rotina equilibrada para se manter ativo.', value: 'general_fitness' },
 ] satisfies readonly SetupOption<TrainingGoal>[];

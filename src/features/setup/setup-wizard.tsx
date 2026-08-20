@@ -3,6 +3,7 @@ import { BackHandler, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 
 import type { Equipment } from '@/domain/exercise';
+import { serializeEquipment } from '@/features/plan';
 import { AppButton, AppCard, AppScreen, AppText, ChoiceChip } from '@/ui/components';
 import { radius, spacing, useAppTheme } from '@/ui/theme';
 import {
@@ -13,11 +14,12 @@ import {
   GOAL_OPTIONS,
   labelFor,
 } from './setup-options';
+import { completeSetupDraft } from './complete-setup';
 import { INITIAL_SETUP_DRAFT, type SetupDraft, type SetupStep, type SetupView } from './setup-types';
 
 const STEP_COPY = {
   1: { title: 'Qual é seu objetivo?', description: 'Escolha o foco principal desta rotina.' },
-  2: { title: 'Qual é sua experiência?', description: 'Isso ajuda a adequar a estrutura do treino.' },
+  2: { title: 'Qual é sua experiência?', description: 'Informe seu nível atual de experiência com treino.' },
   3: { title: 'Quantos dias você quer treinar?', description: 'Considere uma frequência que caiba de verdade na sua semana.' },
   4: { title: 'Quanto tempo você tem por treino?', description: 'Use o tempo que costuma estar disponível em cada sessão.' },
   5: { title: 'Quais equipamentos você tem?', description: 'Marque quantos quiser. Você também pode seguir sem selecionar nenhum.' },
@@ -68,6 +70,26 @@ export function SetupWizard() {
 
   if (view === 'summary') {
     const equipmentLabels = draft.availableEquipment.map((equipment) => labelFor(EQUIPMENT_OPTIONS, equipment));
+    const completedSetup = completeSetupDraft(draft);
+    const canGenerate = completedSetup.valid && completedSetup.value.goal === 'hypertrophy' && completedSetup.value.availableEquipment.length > 0;
+    const unsupportedGoal = completedSetup.valid && completedSetup.value.goal !== 'hypertrophy';
+    const missingEquipment = completedSetup.valid && completedSetup.value.goal === 'hypertrophy' && completedSetup.value.availableEquipment.length === 0;
+
+    function generatePlan() {
+      if (!completedSetup.valid || !canGenerate) return;
+      const setup = completedSetup.value;
+      router.push({
+        pathname: '/plan',
+        params: {
+          days: String(setup.daysPerWeek),
+          duration: String(setup.sessionDurationMinutes),
+          equipment: serializeEquipment(setup.availableEquipment),
+          experience: setup.experience,
+          goal: setup.goal,
+        },
+      });
+    }
+
     return <AppScreen key="summary" scrollable contentContainerStyle={styles.page}>
       <View style={styles.frame}>
         <View style={styles.summaryIntro}>
@@ -87,7 +109,18 @@ export function SetupWizard() {
           <SummaryDivider />
           <SummaryRow label="Equipamentos" value={equipmentLabels.length > 0 ? equipmentLabels.join(', ') : 'Nenhum equipamento selecionado'} />
         </AppCard>
+        {unsupportedGoal ? <AppCard style={[styles.callout, { backgroundColor: colors.surfaceMuted }]}>
+          <AppText variant="heading">{labelFor(GOAL_OPTIONS, draft.goal)} está chegando</AppText>
+          <AppText tone="muted" variant="bodyMuted">Por enquanto, o DuoFit gera planos somente para Hipertrofia. Suas escolhas continuam aqui para você editar.</AppText>
+          <AppButton label="Editar objetivo" onPress={() => setView(1)} variant="secondary" />
+        </AppCard> : null}
+        {missingEquipment ? <AppCard style={[styles.callout, { backgroundColor: colors.surfaceMuted }]}>
+          <AppText variant="heading">Selecione ao menos um equipamento</AppText>
+          <AppText tone="muted" variant="bodyMuted">Precisamos dessa informação para montar exercícios compatíveis com sua rotina.</AppText>
+          <AppButton label="Editar equipamentos" onPress={() => setView(5)} variant="secondary" />
+        </AppCard> : null}
         <View style={styles.actions}>
+          {canGenerate ? <AppButton label="Gerar meu treino" onPress={generatePlan} /> : null}
           <AppButton label="Editar escolhas" onPress={() => setView(1)} variant="secondary" />
           <AppButton label="Voltar ao início" onPress={() => router.replace('/')} variant="ghost" />
         </View>
@@ -151,4 +184,5 @@ const styles = StyleSheet.create({
   summaryRow: { gap: spacing.xs },
   divider: { height: 1, width: '100%' },
   actions: { gap: spacing.sm, marginTop: spacing.xl },
+  callout: { gap: spacing.md, marginTop: spacing.md },
 });

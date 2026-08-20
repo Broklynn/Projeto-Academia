@@ -16,7 +16,9 @@
   "include": [
     "src/domain/**/*.ts",
     "src/data/exercises/**/*.ts",
-    "src/features/training/**/*.ts"
+    "src/features/training/**/*.ts",
+    "src/features/setup/**/*.ts",
+    "src/features/plan/**/*.ts"
   ],
   "exclude": [
     "node_modules"

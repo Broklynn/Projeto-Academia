@@ -1,7 +1,12 @@
 import type { Equipment, MuscleGroup } from '../exercise/types';
 import type { IsoDateTimeString } from '../types';
 
-export const TRAINING_GOALS = ['hypertrophy', 'strength', 'general_fitness'] as const;
+export const TRAINING_GOALS = [
+  'hypertrophy',
+  'weight_loss',
+  'strength',
+  'general_fitness',
+] as const;
 export const EXPERIENCE_LEVELS = ['beginner', 'intermediate', 'advanced'] as const;
 
 export const TRAINING_DAYS_PER_WEEK_LIMITS = {
