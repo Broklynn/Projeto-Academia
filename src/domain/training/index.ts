@@ -38,6 +38,11 @@ export type {
   MuscleWeeklyVolumeTarget,
 } from './volume-policy';
 export {
+  buildDefaultHypertrophySetCreditPolicy,
+  DEFAULT_HYPERTROPHY_INDIRECT_SET_CREDIT,
+} from './set-credit-policy';
+export type { HypertrophySetCreditPolicy } from './set-credit-policy';
+export {
   validateRepRange,
   validateSetPerformance,
   validateWorkoutExercise,

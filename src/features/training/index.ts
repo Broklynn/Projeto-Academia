@@ -17,6 +17,11 @@ export type {
   TrainingWeekSetAllocation,
   WeeklyDirectSetVolumeAnalysis,
 } from './analyze-set-volume';
+export { analyzeWeeklyCreditedSetVolume } from './analyze-credited-set-volume';
+export type {
+  MuscleCreditedSetStatus,
+  WeeklyCreditedSetVolumeAnalysis,
+} from './analyze-credited-set-volume';
 export { analyzeWeeklySessionDuration } from './analyze-session-duration';
 export type {
   SessionDurationConstraint,
