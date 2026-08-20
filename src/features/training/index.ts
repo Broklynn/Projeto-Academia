@@ -58,3 +58,11 @@ export type {
   TrainingDaySelection,
   TrainingWeekSelection,
 } from './build-training-selection';
+export { prescribeTrainingWeek } from './prescribe-training-week';
+export type {
+  ExercisePrescriptionOverride,
+  ExercisePrescriptionRule,
+  PrescribedTrainingDay,
+  PrescribedTrainingWeek,
+  TrainingPrescriptionPolicy,
+} from './prescribe-training-week';
